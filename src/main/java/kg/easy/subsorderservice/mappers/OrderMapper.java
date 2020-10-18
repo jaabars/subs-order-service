@@ -33,6 +33,11 @@ public interface OrderMapper {
         return orderDtos;
 
     }
+    default OrderDto orderHistoryToOrderDto(OrderHistory orderHistory){
+        OrderDto orderDto = OrderMapper.INSTANCE.toOrderDto(orderHistory.getOrder());
+        orderDto.setOrderHistory(OrderHistoryMapper.INSTANCE.toOrderHistoryDto(orderHistory));
+        return orderDto;
+    }
 
 
 }

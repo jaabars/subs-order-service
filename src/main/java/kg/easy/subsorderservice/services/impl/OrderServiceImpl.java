@@ -6,7 +6,7 @@ import kg.easy.subsorderservice.mappers.SubscriberMapper;
 import kg.easy.subsorderservice.models.Order;
 import kg.easy.subsorderservice.models.OrderHistory;
 import kg.easy.subsorderservice.models.appDto.OrderAppDto;
-import kg.easy.subsorderservice.models.dto.DistrictDto;
+import kg.easy.subsorderservice.models.appDto.OrderCloseDto;
 import kg.easy.subsorderservice.models.dto.OrderDto;
 import kg.easy.subsorderservice.models.dto.SubscriberDto;
 import kg.easy.subsorderservice.models.enums.OrderStatus;
@@ -50,6 +50,14 @@ public class OrderServiceImpl implements OrderService {
 
         }else{
             Order currOrder = orderRepo.findTopBySubscriberOrderByIdDesc(SubscriberMapper.INSTANCE.toSubscriber(subscriberDto));
+            OrderStatus orderStatus = orderHistoryService.findActualOrderStatus(currOrder);
+            if (orderStatus.equals(OrderStatus.IN_PROCESS)){
+                response.setMessage("Ваш запрос обрабатывается");
+                return response;
+            }else if (orderStatus.equals(OrderStatus.APPROVED)){
+                response.setMessage("У Вас услуга подключена");
+                return response;
+            }
             orderHistoryService.closeHistory(currOrder);
         }
 
@@ -62,7 +70,7 @@ public class OrderServiceImpl implements OrderService {
 
         order = orderRepo.save(order);
 
-        OrderDto orderDto = orderHistoryService.appendHistory(OrderMapper.INSTANCE.toOrderDto(order), OrderStatus.NEW);
+        OrderDto orderDto = orderHistoryService.appendHistory(OrderMapper.INSTANCE.toOrderDto(order), OrderStatus.NEW, null);
 
         response.setObject(orderDto);
 
@@ -104,7 +112,7 @@ public class OrderServiceImpl implements OrderService {
             return response;
         }
 
-        OrderDto orderDto = orderHistoryService.appendHistory(OrderMapper.INSTANCE.toOrderDto(order), OrderStatus.IN_PROCESS);
+        OrderDto orderDto = orderHistoryService.appendHistory(OrderMapper.INSTANCE.toOrderDto(order), OrderStatus.IN_PROCESS, null);
 
         response.setObject(orderDto);
         return response;
@@ -123,9 +131,40 @@ public class OrderServiceImpl implements OrderService {
             return response;
         }
 
-        OrderDto orderDto = orderHistoryService.appendHistory(OrderMapper.INSTANCE.toOrderDto(order), status );
+        OrderDto orderDto = orderHistoryService.appendHistory(OrderMapper.INSTANCE.toOrderDto(order),status, null);
 
         response.setObject(orderDto);
+
+        return response;
+    }
+
+    @Override
+    public Response getNextOrder() {
+        Response response = Response.getResponse();
+        OrderHistory orderHistory = orderHistoryService.getTopOrderHistoryForNextProcess();
+        if (orderHistory == null){
+            response.setStatus(1);
+            response.setMessage("Заявки для следующей обработки отсутсвуют");
+            return response;
+        }
+        OrderDto orderDto = OrderMapper.INSTANCE.orderHistoryToOrderDto(orderHistory);
+        response.setObject(orderDto);
+        return response;
+    }
+
+    @Override
+    public Response closeOrder(OrderCloseDto orderCloseDto) {
+
+        Response response = Response.getResponse();
+        Order order = orderRepo.findById(orderCloseDto.getOrderId()).orElse(null);
+        if (order==null){
+            response.setStatus(404);
+            response.setMessage("Не найдено");
+            return response;
+        }
+          orderHistoryService.closeHistory(order);
+            OrderDto orderDto = orderHistoryService.appendHistory(OrderMapper.INSTANCE.toOrderDto(order),orderCloseDto.getStatus(),orderCloseDto.getComment());
+            response.setObject(orderDto);
 
         return response;
     }

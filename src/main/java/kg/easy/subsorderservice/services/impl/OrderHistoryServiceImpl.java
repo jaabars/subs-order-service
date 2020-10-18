@@ -21,7 +21,7 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
     private OrderHistoryRepo orderHistoryRepo;
 
     @Override
-    public OrderDto appendHistory(OrderDto orderDto, OrderStatus newStatus) {
+    public OrderDto appendHistory(OrderDto orderDto, OrderStatus newStatus, String comment) {
 
         if (orderHistoryRepo.existsByOrderAndEndDateIsNull(OrderMapper.INSTANCE.toOrder(orderDto))){
             OrderHistory currOrderHistory = orderHistoryRepo.findByOrderAndEndDateIsNull(OrderMapper.INSTANCE.toOrder(orderDto));
@@ -32,6 +32,7 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
         OrderHistory newOrderHistory = new OrderHistory();
         newOrderHistory.setStartDate(new Date());
         newOrderHistory.setStatus(newStatus);
+        newOrderHistory.setComment(comment);
         newOrderHistory.setOrder(OrderMapper.INSTANCE.toOrder(orderDto));
 
         newOrderHistory = orderHistoryRepo.save(newOrderHistory);
@@ -61,4 +62,10 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
     public List<OrderHistory> findOrderHistoriesByStatus(OrderStatus status) {
         return orderHistoryRepo.findAllByStatusAndEndDateIsNull(status);
     }
+
+    @Override
+    public OrderHistory getTopOrderHistoryForNextProcess() {
+        return orderHistoryRepo.findFirstByEndDateIsNullAndStatusIs(OrderStatus.NEW);
+    }
+
 }

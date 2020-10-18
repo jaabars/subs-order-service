@@ -17,4 +17,6 @@ public interface OrderHistoryRepo extends JpaRepository<OrderHistory, Long> {
 
     List<OrderHistory> findAllByStatusAndEndDateIsNull(OrderStatus status);
 
+    OrderHistory findFirstByEndDateIsNullAndStatusIs(OrderStatus orderStatus);
+
 }

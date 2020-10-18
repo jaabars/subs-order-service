@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface OrderRepo extends JpaRepository<Order, Long> {
 
     Order findTopBySubscriberOrderByIdDesc(Subscriber subscriber);
+
 }

@@ -37,12 +37,13 @@ public class OrderController {
 
     @GetMapping("/next")
     public Response getNextOrder(){
-        return null;
-        //return orderService.getNextOrder();
+
+        return orderService.getNextOrder();
     }
 
     @PutMapping("/close")
     public Response closeOrder(@RequestBody OrderCloseDto orderCloseDto){
-        return null;
+
+        return orderService.closeOrder(orderCloseDto);
     }
 }
